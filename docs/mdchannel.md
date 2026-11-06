@@ -1,0 +1,109 @@
+# mdchannel — бот @mdchannelbot внутри виджета
+
+Виджет — одна HTML-страница в сообщении. Сам по себе он не умеет ничего общего: не знает, сколько людей
+нажали кнопку, и не видит интернет. `mdchannel` даёт ему это через нашего бота: общие счётчики, голоса,
+оценки, курс ЦБ, поля формы.
+
+## Как подключить
+
+Никак: просто пишите в коде `mdchannel.…`. Бот сам добавит библиотеку, когда публикует виджет, — и в
+превью тоже. Добавляются только те методы, которые есть в коде: обычно это 0,3–0,6 КБ из 4 КБ виджета.
+
+## Пример: кнопка со счётчиком
+
+```html
+<style>
+  button{width:100%;padding:14px;border:0;border-radius:14px;background:var(--tg-theme-button-color);
+    color:var(--tg-theme-button-text-color);font:600 17px system-ui}
+  p{text-align:center;color:var(--tg-theme-hint-color)}
+</style>
+<button id="b"></button>
+<p id="n"></p>
+<script>
+  var b = document.getElementById("b"), n = document.getElementById("n");
+  b.textContent = mdchannel.fields.label;
+  function show(total) { n.textContent = "Уже " + total; }
+  show(mdchannel.total("likes"));
+  b.onclick = function () {
+    mdchannel.haptic("light");
+    mdchannel.count("likes").then(show);
+  };
+  mdchannel.on("data", function () { show(mdchannel.total("likes")); });
+</script>
+<script type="application/json" id="tw-manifest">
+{"fields": [{"kind": "text", "key": "label", "label": "Текст кнопки", "max_length": 40}],
+ "defaults": {"label": "❤️ Нравится"}}
+</script>
+```
+
+## Что есть
+
+| Что | Что делает | Пример |
+|---|---|---|
+| `mdchannel.fields` | Поля формы: то, что автор заполнил в редакторе (блок `tw-manifest`, ниже) | `mdchannel.fields.title` |
+| `mdchannel.count(name)` | +1 к общему счётчику. Возвращает Promise с новым итогом | `mdchannel.count("likes").then(show)` |
+| `mdchannel.total(name)` | Итог счётчика сейчас, без +1 | `mdchannel.total("likes")` |
+| `mdchannel.vote(i)` | Голос за вариант `i` (с 0), один на человека. Promise с массивом голосов по вариантам | `mdchannel.vote(2).then(draw)` |
+| `mdchannel.votes(n)` | Голоса сейчас; `n` — сколько вариантов, чтобы пустые были нулями | `mdchannel.votes(4)` → `[12, 3, 0, 7]` |
+| `mdchannel.voted()` | За какой вариант голосовал этот читатель, или `null` | `if (mdchannel.voted() != null) …` |
+| `mdchannel.rate(v)` | Оценка от 1 до 10, одна на человека. Promise с `{avg, count, me}` | `mdchannel.rate(8).then(showAvg)` |
+| `mdchannel.rating()` | Оценки сейчас: `{avg, count, me}` | `mdchannel.rating().avg` |
+| `mdchannel.rated()` | Оценка этого читателя, или `null` | |
+| `mdchannel.data(name)` | Данные бота (список ниже), или `null`, пока их нет | `mdchannel.data("rates")` |
+| `mdchannel.on("data", fn)` | Вызвать `fn`, когда бот обновил данные или счётчики | `mdchannel.on("data", redraw)` |
+| `mdchannel.me` | Кто смотрит: `{id, first_name, …}`, или `null`, где Telegram не говорит | `mdchannel.me && mdchannel.me.first_name` |
+| `mdchannel.preview` | `true` в превью (галерея, до отправки): виджет должен сам показывать себя в работе | `if (mdchannel.preview) demo()` |
+| `mdchannel.open(url)` | Открыть ссылку (t.me — внутри Telegram) | `mdchannel.open("https://t.me/mdchannelbot")` |
+| `mdchannel.copy(text)` | Скопировать текст | `mdchannel.copy("PROMO10")` |
+| `mdchannel.haptic(kind)` | Вибрация: `light`, `medium`, `heavy`, `select`, `success`, `error`, `warning` | `mdchannel.haptic("success")` |
+
+## Данные бота
+
+Пишите имя в кавычках прямо в вызове — `mdchannel.data("rates")`, — тогда бот видит, какие данные положить в виджет.
+
+**`rates`** — курсы ЦБ РФ на сегодня. Рублей за одну единицу, сегодня и вчера:
+
+```json
+{"d": "2026-11-06",
+ "r": {"USD": [81.79, 81.67], "EUR": [92.16, 91.6], "CNY": [12.26, 12.18]},
+ "h": {"USD": [84.1, 83.9, 81.79]}, "h0": "2026-10-03", "o": "034"}
+```
+
+- Валюты в `r`: USD, EUR, CNY, GBP, JPY, TRY, KZT, BYN, AED, CHF, THB, GEL.
+- `h` — история для графика за 5 недель, только для USD, EUR и CNY.
+- `h0` — первый день истории.
+- `o` — день каждого значения: смещение от `h0` в днях, одной цифрой base36. В выходные курса нет.
+
+## Поля формы
+
+Чтобы автор менял тексты без кода, добавьте в файл блок с полями. Значения придут в `mdchannel.fields`:
+
+```html
+<script type="application/json" id="tw-manifest">
+{"fields": [{"kind": "text", "key": "question", "label": "Вопрос", "max_length": 100}],
+ "defaults": {"question": "Кофе или чай?"}}
+</script>
+```
+
+Виды полей:
+
+- `{"kind": "text", "key", "label", "max_length"?, "multiline"?}` — текст.
+- `{"kind": "emoji", "key", "label", "optional"?}` — один эмодзи.
+- `{"kind": "emojis", "key", "label", "max_length"?}` — эмодзи подряд.
+- `{"kind": "number", "key", "label", "min"?, "max"?, "slider"?, "step"?}` — целое число, со `"slider": true` — ползунок.
+- `{"kind": "toggle", "key", "label"}` — да или нет.
+- `{"kind": "select", "key", "label", "options": [...]}` — одна из строк.
+- `{"kind": "color", "key", "label", "options": ["#rrggbb", ...]}` — цвет.
+- `{"kind": "moment", "key", "label"}` — дата и время, Unix-время в мс.
+- `{"kind": "list", "key", "label", "fields": [...], "min"?, "max"?}` — список, можно вкладывать.
+- `{"kind": "pick_item", "key", "label", "list": "<key списка>", "item_text": "<key текста>"}` — номер пункта списка.
+
+## Важно
+
+- **`count`, `vote` и `rate` вызывайте в обработчике тапа.** Telegram разрешает виджету обращаться к боту только по нажатию.
+- **Без бота всё тоже работает.** В превью, в пересланном сообщении, если бот не ответил — `mdchannel` считает
+  у этого читателя и возвращает итог как обычно. Отдельную «заглушку» писать не нужно.
+- **Сейчас бот ещё не принимает запросы виджетов.** Поэтому счётчики, голоса и оценки пока видит только сам
+  читатель. Когда подключим, они станут общими, код менять не придётся.
+- **Имя счётчика** — латиница, цифры и `_`, до 20 знаков. В одном виджете может быть сколько угодно счётчиков.
+- **Общий объём всего, что бот хранит для виджета** (данные, счётчики, голоса), — до 1 КБ.

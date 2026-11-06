@@ -1,0 +1,22 @@
+<style>
+  button{width:100%;padding:14px;border:0;border-radius:14px;background:var(--tg-theme-button-color);
+    color:var(--tg-theme-button-text-color);font:600 17px system-ui}
+  p{text-align:center;color:var(--tg-theme-hint-color)}
+</style>
+<button id="b"></button>
+<p id="n"></p>
+<script>
+  var b = document.getElementById("b"), n = document.getElementById("n");
+  b.textContent = mdchannel.fields.label;
+  function show(total) { n.textContent = "Уже " + total; }
+  show(mdchannel.total("likes"));
+  b.onclick = function () {
+    mdchannel.haptic("light");
+    mdchannel.count("likes").then(show);
+  };
+  mdchannel.on("data", function () { show(mdchannel.total("likes")); });
+</script>
+<script type="application/json" id="tw-manifest">
+{"fields": [{"kind": "text", "key": "label", "label": "Текст кнопки", "max_length": 40}],
+ "defaults": {"label": "❤️ Нравится"}}
+</script>
