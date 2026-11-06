@@ -65,7 +65,7 @@ description: Write Telegram widgets for @mdchannelbot — one HTML file shown li
 </script>
 ```
 
-- **Виды полей:** `text`, `emoji`, `emojis`, `number` (`"slider": true` — ползунок), `toggle`, `select`, `color`, `moment` (мс), `list` (вложенные `fields`), `pick_item`.
+- **Виды полей:** `text`, `emoji`, `emojis`, `number` (`"slider": true` — ползунок), `toggle`, `select` (`"labels"` — подписи вариантов в форме), `color`, `moment` (мс), `list` (вложенные `fields`), `pick_item`.
 - **`key`** — латиницей, **`label`** — по-русски.
 - **`"height"`** — высота при ширине 340 px.
 
