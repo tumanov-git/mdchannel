@@ -26,6 +26,15 @@ button.onclick = function () {
 - [**mdchannel**](docs/mdchannel.md) — все методы, данные бота, поля формы, примеры.
 - [**Как сделать свой виджет**](docs/widgets.md) — правила Telegram для виджетов и как загрузить свой в @mdchannelbot.
 - [**Пример**](examples/likes.html) — кнопка с общим счётчиком.
+- [**Скилл для ИИ-агентов**](skills/mdchannel/SKILL.md) — Claude Code и другие агенты сразу пишут виджеты по правилам.
+
+### Поставить скилл
+
+```bash
+mkdir -p ~/.claude/skills/mdchannel && curl -fsSL https://raw.githubusercontent.com/tumanov-git/mdchannel/main/skills/mdchannel/SKILL.md -o ~/.claude/skills/mdchannel/SKILL.md
+```
+
+После этого попросите агента: «сделай виджет для @mdchannelbot: …».
 
 ## Как это устроено
 
