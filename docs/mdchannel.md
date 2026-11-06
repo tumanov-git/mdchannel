@@ -49,6 +49,13 @@
 | `mdchannel.rate(v)` | Оценка от 1 до 10, одна на человека. Promise с `{avg, count, me}` | `mdchannel.rate(8).then(showAvg)` |
 | `mdchannel.rating()` | Оценки сейчас: `{avg, count, me}` | `mdchannel.rating().avg` |
 | `mdchannel.rated()` | Оценка этого читателя, или `null` | |
+| `mdchannel.score(points)` | Результат в игре. Promise с `{t, best, place}`: топ-10 `[[имя, очки], …]`, лучший результат читателя и его место | `mdchannel.score(37).then(showBoard)` |
+| `mdchannel.top()` | Топ-10 сейчас | `mdchannel.top()` → `[["Аня", 120], …]` |
+| `mdchannel.claim(field)` | Промокод из секретного поля: каждому свой и один. Promise с `{code, left}` или `{error: "empty"}`, когда закончились | `mdchannel.claim("codes")` |
+| `mdchannel.isMember(channel?)` | Подписан ли читатель на канал. Promise с `true`, `false` или `null`, если узнать нельзя | `mdchannel.isMember("@mychannel")` |
+| `mdchannel.unlock(field)` | Секретный текст — только этому читателю. Promise с `{text}` или `{error: "not_member", channel}`, `{error: "not_paid", price}` | `mdchannel.unlock("hidden")` |
+| `mdchannel.remind(field)` | Напомнить в личку в момент из поля-даты. Promise с `{at}` или `{error: "start", link}`, если читатель не запускал бота | `mdchannel.remind("when")` |
+| `mdchannel.buy(field)` | Счёт в звёздах Telegram на цену из поля. Promise с `{link}` — откройте её следующим тапом — или `{paid: true}` | `mdchannel.buy("price")` |
 | `mdchannel.data(name)` | Данные бота (список ниже), или `null`, пока их нет | `mdchannel.data("rates")` |
 | `mdchannel.on("data", fn)` | Вызвать `fn`, когда бот обновил данные или счётчики | `mdchannel.on("data", redraw)` |
 | `mdchannel.me` | Кто смотрит: `{id, first_name, …}`, или `null`, где Telegram не говорит | `mdchannel.me && mdchannel.me.first_name` |
@@ -56,6 +63,28 @@
 | `mdchannel.open(url)` | Открыть ссылку (t.me — внутри Telegram) | `mdchannel.open("https://t.me/mdchannelbot")` |
 | `mdchannel.copy(text)` | Скопировать текст | `mdchannel.copy("PROMO10")` |
 | `mdchannel.haptic(kind)` | Вибрация: `light`, `medium`, `heavy`, `select`, `success`, `error`, `warning` | `mdchannel.haptic("success")` |
+
+## Секретные поля
+
+Поле с `"secret": true` (только `text`) не попадает в код виджета: его видит только бот. Так хранят то, что нельзя
+показывать всем:
+
+- **промокоды** — по одному на строку, `mdchannel.claim("codes")` раздаёт их по одному в руки;
+- **текст для своих** — `mdchannel.unlock("hidden")` отдаёт его только тому, кто нажал.
+
+`unlock` ставит условия сам, по другим полям виджета:
+
+- есть поле `channel` (`@канал`) — только подписчикам этого канала. Бот должен быть его админом.
+- есть поле `price` (число звёзд) — только тем, кто заплатил: сначала `mdchannel.buy("price")`, потом ещё раз `unlock`.
+
+```html
+<script type="application/json" id="tw-manifest">
+{"fields": [{"kind": "text", "key": "codes", "label": "Промокоды, по одному на строку", "max_length": 1000,
+             "multiline": true, "secret": true},
+            {"kind": "text", "key": "channel", "label": "Только для подписчиков канала", "max_length": 40}],
+ "defaults": {"codes": "", "channel": "@mychannel"}}
+</script>
+```
 
 ## Данные бота
 
@@ -100,9 +129,11 @@
 
 ## Важно
 
-- **`count`, `vote` и `rate` вызывайте в обработчике тапа.** Telegram разрешает виджету обращаться к боту только по нажатию.
+- **`count`, `vote`, `rate`, `score`, `claim`, `isMember`, `unlock`, `remind` и `buy` вызывайте в обработчике тапа.** Telegram разрешает виджету обращаться к боту только по нажатию.
+- **Ссылку из `buy` и `remind` открывайте следующим тапом** (кнопка «Оплатить ⭐50», «Запустить бота»): Telegram открывает ссылки только по нажатию, а ответ бота приходит уже после него.
 - **Без бота всё тоже работает.** В превью, в пересланном сообщении, если бот не ответил — `mdchannel` считает
-  у этого читателя и возвращает итог как обычно. Отдельную «заглушку» писать не нужно.
+  у этого читателя и возвращает итог как обычно. Отдельную «заглушку» писать не нужно. `claim`, `unlock`, `remind` и
+  `buy` без бота ответят `{error: "offline"}`, `isMember` — `null`: покажите, что это сработает в опубликованном посте.
 - **Сейчас бот ещё не принимает запросы виджетов.** Поэтому счётчики, голоса и оценки пока видит только сам
   читатель. Когда подключим, они станут общими, код менять не придётся.
 - **Имя счётчика** — латиница, цифры и `_`, до 20 знаков. В одном виджете может быть сколько угодно счётчиков.

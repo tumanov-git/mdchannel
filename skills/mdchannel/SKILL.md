@@ -34,12 +34,19 @@ description: Write Telegram widgets for @mdchannelbot — one HTML file shown li
 | `mdchannel.vote(i)` → Promise<[голоса]> | голос за вариант `i` с 0, один на человека; `votes(n)`, `voted()` |
 | `mdchannel.rate(1..10)` → Promise<{avg, count, me}> | оценка, одна на человека; `rating()`, `rated()` |
 | `mdchannel.data("rates")` | данные бота или `null`; `mdchannel.on("data", fn)` — обновились |
+| `mdchannel.score(n)` → Promise<{t, best, place}> | рекорд: топ-10 `[[имя, очки]]`, лучший и место читателя; `top()` |
+| `mdchannel.claim("codes")` → Promise<{code, left}> | промокод из секретного поля, каждому свой; `{error:"empty"}` — кончились |
+| `mdchannel.isMember("@канал")` → Promise<true/false/null> | подписан ли читатель (бот — админ канала) |
+| `mdchannel.unlock("hidden")` → Promise<{text}> | секретный текст только этому читателю; `{error:"not_member"}`, `{error:"not_paid"}` |
+| `mdchannel.remind("when")` → Promise<{at}> | напомнить в личку в момент из поля-даты; `{error:"start", link}` |
+| `mdchannel.buy("price")` → Promise<{link}> | счёт в звёздах на цену из поля; ссылку открыть следующим тапом |
 | `mdchannel.me` | кто смотрит или `null` |
 | `mdchannel.preview` | `true` в превью: показывай демо |
 | `mdchannel.open(url)`, `copy(text)`, `haptic(kind)` | ссылка, копирование, вибрация (`light`, `select`, `success`, `error`…) |
 
 Ещё правила для `mdchannel`:
-- `count`, `vote` и `rate` вызывай только в обработчике тапа.
+- Все запросы к боту (`count`, `vote`, `rate`, `score`, `claim`, `isMember`, `unlock`, `remind`, `buy`) — только в обработчике тапа. Ссылку из ответа (`buy`, `remind`) открывай следующим тапом.
+- Секретное поле: `{"kind":"text",…,"secret":true}` — его видит только бот (промокоды по строке, текст для своих). У `unlock` условия по полям `channel` (подписчики) и `price` (оплатившие).
 - Без бота (превью, пересылка) библиотека считает у читателя сама. Заглушки не пиши.
 - `rates` — курсы ЦБ: `{"d":"2026-11-06","r":{"USD":[сегодня, вчера],…},"h":{"USD":[…]},"h0":"…","o":"…"}`. История `h` есть для USD, EUR, CNY за 5 недель; `o` — день каждого значения, смещение от `h0` в днях цифрой base36.
 

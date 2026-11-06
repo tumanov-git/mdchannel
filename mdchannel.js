@@ -11,7 +11,7 @@ function ld(){S=js(T.publicData);C=js(T.chatData)}
 function up(){ld();if(!F)md.fields=S;L.forEach(function(f){f()})}
 function g(k,d){try{var v=localStorage["md"+k];return v==null?d:JSON.parse(v)}catch(e){return d}}
 function p(k,v){try{localStorage["md"+k]=JSON.stringify(v)}catch(e){}}
-function q(s,f,b){var r;try{r=T.request&&T.request(s)}catch(e){}return(r||Promise.reject()).then(function(a){var x=JSON.parse(a.result);if(!x||x.error)throw 0;f(x);return b()},function(){return b()})}
+function q(s,f,b,e){var r;try{r=T.request&&T.request(s)}catch(o){}return(r||Promise.reject()).then(function(a){var x=JSON.parse(a.result);if(!x||x.error&&!e)throw 0;f(x);return b()},function(){return b()})}
 function n(a){return a||0}
 ld();T.onEvent&&(T.onEvent("publicDataChanged",up),T.onEvent("chatDataChanged",up));T.watchPublicData&&T.watchPublicData();
 return md={
@@ -29,4 +29,11 @@ rate:function(v){if(md.rated()!=null)return Promise.resolve(md.rating());p("r",v
 open:function(u){/^https:\/\/t\.me\//.test(u)?T.openTelegramLink(u):T.openLink(u)},
 copy:function(t){T.copyText(t)},
 haptic:function(k){H&&(/^(success|error|warning)$/.test(k)?H.notificationOccurred(k):k=="select"?H.selectionChanged():H.impactOccurred(k||"light"))},
+score:function(v){var b=Math.max(v,g("s",0)),r;p("s",b);return q("s:"+Math.floor(v),function(x){r=x;C.t=x.t},function(){return r||{t:C.t||[],best:b,place:null}})},
+top:function(){return C.t||[]},
+claim:function(f){var r;return q("k:"+f,function(x){r=x},function(){return r||{error:"offline"}},1)},
+isMember:function(c){var r=null;return q("m:"+(c||""),function(x){r=x.member==null?null:x.member},function(){return r},1)},
+unlock:function(f){var r;return q("u:"+f,function(x){r=x},function(){return r||{error:"offline"}},1)},
+remind:function(f){var r;return q("n:"+f,function(x){r=x},function(){return r||{error:"offline"}},1)},
+buy:function(f){var r;return q("b:"+f,function(x){r=x},function(){return r||{error:"offline"}},1)},
 }})
