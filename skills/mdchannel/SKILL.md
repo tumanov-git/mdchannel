@@ -45,6 +45,7 @@ description: Write Telegram widgets for @mdchannelbot — one HTML file shown li
 | `mdchannel.open(url)`, `copy(text)`, `haptic(kind)` | ссылка, копирование, вибрация (`light`, `select`, `success`, `error`…) |
 
 Ещё правила для `mdchannel`:
+- Один тап — одно действие: запрос к боту, `copy`, `open` делят одно разрешение на нажатие. Из таймера запрос не уйдёт.
 - Все запросы к боту (`count`, `vote`, `rate`, `score`, `claim`, `isMember`, `unlock`, `remind`, `buy`) — только в обработчике тапа. Ссылку из ответа (`buy`, `remind`) открывай следующим тапом.
 - Секретное поле: `{"kind":"text",…,"secret":true}` — его видит только бот (промокоды по строке, текст для своих). У `unlock` условия по полям `channel` (подписчики) и `price` (оплатившие).
 - Без бота (превью, пересылка) библиотека считает у читателя сама. Заглушки не пиши.
