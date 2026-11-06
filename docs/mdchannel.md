@@ -121,7 +121,7 @@
 - `{"kind": "emojis", "key", "label", "max_length"?}` — эмодзи подряд.
 - `{"kind": "number", "key", "label", "min"?, "max"?, "slider"?, "step"?}` — целое число, со `"slider": true` — ползунок.
 - `{"kind": "toggle", "key", "label"}` — да или нет.
-- `{"kind": "select", "key", "label", "options": [...]}` — одна из строк.
+- `{"kind": "select", "key", "label", "options": [...], "labels": [...]}` — одна из строк; `labels` (необязательно, по одной на вариант) — как варианты показаны в форме, например «🇺🇸 Доллар США» для `USD`; виджет получает саму строку.
 - `{"kind": "color", "key", "label", "options": ["#rrggbb", ...]}` — цвет.
 - `{"kind": "moment", "key", "label"}` — дата и время, Unix-время в мс.
 - `{"kind": "list", "key", "label", "fields": [...], "min"?, "max"?}` — список, можно вкладывать.
