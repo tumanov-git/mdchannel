@@ -43,19 +43,21 @@
 | `mdchannel.fields` | Поля формы: то, что автор заполнил в редакторе (блок `tw-manifest`, ниже) | `mdchannel.fields.title` |
 | `mdchannel.count(name)` | +1 к общему счётчику. Возвращает Promise с новым итогом | `mdchannel.count("likes").then(show)` |
 | `mdchannel.total(name)` | Итог счётчика сейчас, без +1 | `mdchannel.total("likes")` |
+| `mdchannel.countOnce(name)` | +1, но один раз на человека: «иду», «хочу такое же» — не накрутить. Promise с итогом | `mdchannel.countOnce("going")` |
+| `mdchannel.counted(name)` | Считался ли уже этот читатель в `countOnce` | `if (mdchannel.counted("going")) …` |
 | `mdchannel.vote(i)` | Голос за вариант `i` (с 0), один на человека. Promise с массивом голосов по вариантам | `mdchannel.vote(2).then(draw)` |
 | `mdchannel.votes(n)` | Голоса сейчас; `n` — сколько вариантов, чтобы пустые были нулями | `mdchannel.votes(4)` → `[12, 3, 0, 7]` |
 | `mdchannel.voted()` | За какой вариант голосовал этот читатель, или `null` | `if (mdchannel.voted() != null) …` |
+| `mdchannel.revote(i)` | Сменить голос: старый вариант теряет его, новый получает. Promise с массивом голосов | `mdchannel.revote(1)` |
 | `mdchannel.rate(v)` | Оценка от 1 до 10, одна на человека. Promise с `{avg, count, me}` | `mdchannel.rate(8).then(showAvg)` |
 | `mdchannel.rating()` | Оценки сейчас: `{avg, count, me}` | `mdchannel.rating().avg` |
 | `mdchannel.rated()` | Оценка этого читателя, или `null` | |
-| `mdchannel.score(points)` | Результат в игре. Promise с `{t, best, place}`: топ-10 `[[имя, очки], …]`, лучший результат читателя и его место | `mdchannel.score(37).then(showBoard)` |
+| `mdchannel.score(points)` | Результат в игре. Promise с `{t, best, place}`: топ-10 `[[имя, очки], …]`, лучший результат читателя и его место. Засчитывается не чаще раза в 2 секунды; потолок — поле `max_score`, если автор его задал | `mdchannel.score(37).then(showBoard)` |
 | `mdchannel.top()` | Топ-10 сейчас | `mdchannel.top()` → `[["Аня", 120], …]` |
-| `mdchannel.claim(field)` | Промокод из секретного поля: каждому свой и один. Promise с `{code, left}` или `{error: "empty"}`, когда закончились | `mdchannel.claim("codes")` |
+| `mdchannel.claim(field)` | Промокод из секретного поля: каждому свой и один на пост. Promise с `{code, left}` или `{error: "empty"}`, когда закончились | `mdchannel.claim("codes")` |
 | `mdchannel.isMember(channel?)` | Подписан ли читатель на канал. Promise с `true`, `false` или `null`, если узнать нельзя | `mdchannel.isMember("@mychannel")` |
-| `mdchannel.unlock(field)` | Секретный текст — только этому читателю. Promise с `{text}` или `{error: "not_member", channel}`, `{error: "not_paid", price}` | `mdchannel.unlock("hidden")` |
+| `mdchannel.unlock(field)` | Секретный текст — только этому читателю. Promise с `{text}` или `{error: "not_member", channel}` | `mdchannel.unlock("hidden")` |
 | `mdchannel.remind(field)` | Напомнить в личку в момент из поля-даты. Promise с `{at}` или `{error: "start", link}`, если читатель не запускал бота | `mdchannel.remind("when")` |
-| `mdchannel.buy(field)` | Счёт в звёздах Telegram на цену из поля. Promise с `{link}` — откройте её следующим тапом — или `{paid: true}` | `mdchannel.buy("price")` |
 | `mdchannel.data(name)` | Данные бота (список ниже), или `null`, пока их нет | `mdchannel.data("rates")` |
 | `mdchannel.on("data", fn)` | Вызвать `fn`, когда бот обновил данные или счётчики | `mdchannel.on("data", redraw)` |
 | `mdchannel.me` | Кто смотрит: `{id, first_name, …}`, или `null`, где Telegram не говорит | `mdchannel.me && mdchannel.me.first_name` |
@@ -72,10 +74,8 @@
 - **промокоды** — по одному на строку, `mdchannel.claim("codes")` раздаёт их по одному в руки;
 - **текст для своих** — `mdchannel.unlock("hidden")` отдаёт его только тому, кто нажал.
 
-`unlock` ставит условия сам, по другим полям виджета:
-
-- есть поле `channel` (`@канал`) — только подписчикам этого канала. Бот должен быть его админом.
-- есть поле `price` (число звёзд) — только тем, кто заплатил: сначала `mdchannel.buy("price")`, потом ещё раз `unlock`.
+Если у виджета есть поле `channel` (`@канал`), `unlock` отдаёт текст только подписчикам этого канала. Бот должен быть
+его админом.
 
 ```html
 <script type="application/json" id="tw-manifest">
@@ -129,12 +129,12 @@
 
 ## Важно
 
-- **`count`, `vote`, `rate`, `score`, `claim`, `isMember`, `unlock`, `remind` и `buy` вызывайте в обработчике тапа.** Telegram разрешает виджету обращаться к боту только по нажатию.
+- **`count`, `countOnce`, `vote`, `revote`, `rate`, `score`, `claim`, `isMember`, `unlock` и `remind` вызывайте в обработчике тапа.** Telegram разрешает виджету обращаться к боту только по нажатию.
 - **Один тап — одно действие.** Запрос к боту, `copy` и `open` делят одно разрешение на нажатие: если в одном обработчике скопировать, а потом посчитать, до бота запрос не дойдёт. Запрос из таймера (игра кончилась сама) тоже не уйдёт — отправляйте его по тапу «Ещё раз» или «Сохранить».
-- **Ссылку из `buy` и `remind` открывайте следующим тапом** (кнопка «Оплатить ⭐50», «Запустить бота»): Telegram открывает ссылки только по нажатию, а ответ бота приходит уже после него.
+- **Ссылку из `remind` открывайте следующим тапом** (кнопка «Запустить бота»): Telegram открывает ссылки только по нажатию, а ответ бота приходит уже после него.
 - **Без бота всё тоже работает.** В превью, в пересланном сообщении, если бот не ответил — `mdchannel` считает
-  у этого читателя и возвращает итог как обычно. Отдельную «заглушку» писать не нужно. `claim`, `unlock`, `remind` и
-  `buy` без бота ответят `{error: "offline"}`, `isMember` — `null`: покажите, что это сработает в опубликованном посте.
+  у этого читателя и возвращает итог как обычно. Отдельную «заглушку» писать не нужно. `claim`, `unlock` и `remind`
+  без бота ответят `{error: "offline"}`, `isMember` — `null`: покажите, что это сработает в опубликованном посте.
 - **Сейчас бот ещё не принимает запросы виджетов.** Поэтому счётчики, голоса и оценки пока видит только сам
   читатель. Когда подключим, они станут общими, код менять не придётся.
 - **Имя счётчика** — латиница, цифры и `_`, до 20 знаков. В одном виджете может быть сколько угодно счётчиков.
