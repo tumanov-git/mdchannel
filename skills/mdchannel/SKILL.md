@@ -19,6 +19,7 @@ description: Write Telegram widgets for @mdchannelbot — one HTML file shown li
 - **Цвета из темы:** `var(--tg-theme-bg-color)`, `var(--tg-theme-text-color)`, `var(--tg-theme-hint-color)`, `var(--tg-theme-button-color)`, `var(--tg-theme-button-text-color)`.
 - **Не больше 16 «тяжёлых» элементов одновременно:** `box-shadow`, `filter`, `opacity` < 1, анимации `opacity`/`filter`/`box-shadow`. Иначе Telegram остановит виджет. Появление и мигание — через цвет, `transform`, `background`.
 - **Не работают:** 3D-трансформации, `backdrop-filter`, `filter` кроме `blur`, SMIL, GIF.
+- **Анимации:** без `fill:"forwards"` (конечный стиль задай элементу сам), элемент после анимации удаляй через 300 мс. Иначе после 64 анимаций движок перестаёт рисовать.
 - **Не читай размеры раскладки:** `clientWidth`, `getBoundingClientRect`, `offsetX` в превью дают 0. Размечай в процентах или в canvas фиксированного размера (CSS `width:100%;height:100%`). Зоны нажатия — отдельные элементы со своими обработчиками.
 - **Демо:** если `mdchannel.preview`, виджет сам по кругу показывает себя в работе, в спокойном темпе.
 - **Управление — тапами.** Свайп вбок на iPhone начинает ответ на сообщение.
