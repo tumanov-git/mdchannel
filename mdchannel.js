@@ -8,7 +8,7 @@
 var T=window.TelegramWidget||{},H=T.HapticFeedback,S,C,L=[],md;
 function js(x){try{return JSON.parse(x||"{}")||{}}catch(e){return{}}}
 function ld(){S=js(T.publicData);C=js(T.chatData)}
-function up(){ld();L.forEach(function(f){f()})}
+function up(){ld();if(!F)md.fields=S;L.forEach(function(f){f()})}
 function g(k,d){try{var v=localStorage["md"+k];return v==null?d:JSON.parse(v)}catch(e){return d}}
 function p(k,v){try{localStorage["md"+k]=JSON.stringify(v)}catch(e){}}
 function q(s,f,b){var r;try{r=T.request&&T.request(s)}catch(e){}return(r||Promise.reject()).then(function(a){var x=JSON.parse(a.result);if(!x||x.error)throw 0;f(x);return b()},function(){return b()})}
